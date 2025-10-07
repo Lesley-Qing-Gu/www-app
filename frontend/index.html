@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Voice → Positive / Negative / Neutral</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; }
+    h1 { font-size: 22px; margin-bottom: 8px; }
+    p  { color: #444; }
+    button { padding: 10px 16px; margin-right: 8px; }
+    #result { margin-top: 16px; font-size: 20px; font-weight: 700; }
+    #log { margin-top: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; color: #666; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Voice → Positive / Negative / Neutral</h1>
+  <p>Click “Start”, speak for ~2 seconds, then click “Stop & Analyze”.</p>
+  <div>
+    <button id="startBtn">Start</button>
+    <button id="stopBtn" disabled>Stop & Analyze</button>
+  </div>
+  <div id="result">Result: <em>waiting…</em></div>
+  <div id="log"></div>
+
+  <script>
+    const API = 'http://localhost:8001/ser/predict';
+    let mediaRecorder, chunks = [];
+
+    function log(msg) { document.getElementById('log').textContent = msg; }
+
+    async function init() {
+      // Ask for mic permission
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Use MediaRecorder to buffer ~2s of audio
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' }); // webm/opus
+        chunks = [];
+        const fd = new FormData();
+        fd.append('file', blob, 'chunk.webm');
+
+        const resEl = document.getElementById('result');
+        resEl.textContent = 'Result: analyzing...';
+        log('Uploading ' + blob.type + ' (' + Math.round(blob.size/1024) + ' KB) to ' + API);
+
+        try {
+          const res = await fetch(API, { method: 'POST', body: fd });
+          const json = await res.json();
+          resEl.textContent = 'Result: ' + json.label;
+          log(JSON.stringify(json, null, 2));
+        } catch (e) {
+          resEl.textContent = 'Result: error';
+          log('Fetch error: ' + e);
+        }
+      };
+    }
+
+    document.getElementById('startBtn').onclick = () => {
+      mediaRecorder.start();
+      document.getElementById('result').textContent = 'Result: recording...';
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('stopBtn').disabled = false;
+      // Auto stop after ~2s (optional)
+      // setTimeout(() => document.getElementById('stopBtn').click(), 2000);
+    };
+
+    document.getElementById('stopBtn').onclick = () => {
+      mediaRecorder.stop();
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('stopBtn').disabled = true;
+    };
+
+    init().catch(err => {
+      document.getElementById('result').textContent = 'Result: mic permission denied';
+      log(err && err.message ? err.message : String(err));
+    });
+  </script>
+</body>
+</html>
