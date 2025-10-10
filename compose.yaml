@@ -1,0 +1,29 @@
+services:
+  server:
+    build: ./backend/server
+    restart: unless-stopped
+    volumes:
+      - ./backend/server:/app
+    ports:
+      - 8000:8000
+    env_file:
+      - project.env
+    depends_on:
+      - database
+
+  database:
+    container_name: postgresql_database
+    image: postgres:17.5
+    restart: unless-stopped
+    env_file:
+      - project.env
+
+  database-migrations:
+    image: flyway/flyway:11.10
+    env_file:
+      - project.env
+    depends_on:
+      - database
+    volumes:
+      - ./backend/database-migrations:/flyway/db/migration
+    command: -connectRetries=60 -baselineOnMigrate=true migrate
