@@ -1,4 +1,4 @@
-FROM denoland/deno:alpine-2.2.3
+FROM denoland/deno:alpine-2.4.4
 WORKDIR /app
 COPY . .
 RUN deno cache app-run.js || true
