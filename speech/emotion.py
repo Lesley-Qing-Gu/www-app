@@ -1,17 +1,8 @@
-from fastapi import FastAPI, UploadFile, File
-from fastapi.middleware.cors import CORSMiddleware
 import io, os, tempfile, subprocess
 import numpy as np
 import soundfile as sf
 import librosa
 from transformers import pipeline
-
-# ------------- FastAPI app -------------
-app = FastAPI(title="Voice → P/N/N Emotion API")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
-)
 
 # ------------- HF model pipeline -------------
 # You can change to: "speechbrain/emotion-recognition-wav2vec2-IEMOCAP"
@@ -108,17 +99,3 @@ def classify_pnn_hf(y: np.ndarray, sr: int, threshold: float = 0.50):
     top = max(mapped, key=lambda x: x["score"])
     label = top["mapped"] if top["score"] >= threshold else "Neutral"
     return label, mapped
-
-# ------------- Routes -------------
-@app.get("/")
-def root():
-    return {"status": "ok", "docs": "/docs", "endpoint": "/ser/predict", "model": HF_MODEL}
-
-@app.post("/ser/predict")
-async def predict(file: UploadFile = File(...)):
-    raw = await file.read()
-    y, sr = load_audio_to_mono16k(raw, target_sr=16000)
-    if len(y) < 0.4 * sr:
-        return {"label": "Neutral", "reason": "audio too short (<0.4s)", "model": HF_MODEL}
-    label, dist = classify_pnn_hf(y, sr)
-    return {"label": label, "distribution": dist, "model": HF_MODEL}

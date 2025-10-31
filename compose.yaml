@@ -27,3 +27,24 @@ services:
     volumes:
       - ./backend/database-migrations:/flyway/db/migration
     command: -connectRetries=60 -baselineOnMigrate=true migrate
+
+  frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:8080"
+    environment:
+      NODE_ENV: development
+    restart: always
+
+  speech:
+    build: ./speech
+    volumes:
+      - ./speech:/app
+    ports:
+      - "8080:8000"
+    environment:
+      ENV: development
+    restart: always
