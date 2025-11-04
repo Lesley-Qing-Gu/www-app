@@ -7,8 +7,9 @@ const app = new Hono();
 
 // Use the Docker Postgres connection
 const sql = postgres(
-  Deno.env.get("DATABASE_URL") ?? "postgres://postgres:postgres@localhost:5432/mlweb"
+  Deno.env.get("DATABASE_URL")
 );
+
 
 
 app.use('/*', async (c, next) => {
