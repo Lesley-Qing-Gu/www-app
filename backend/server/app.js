@@ -10,8 +10,6 @@ const sql = postgres(
   Deno.env.get("DATABASE_URL")
 );
 
-
-
 app.use('/*', async (c, next) => {
   await next();
   c.header('Access-Control-Allow-Origin', '*');
