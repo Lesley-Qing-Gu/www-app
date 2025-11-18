@@ -16,87 +16,87 @@ CREATE TABLE practices (
 INSERT INTO practices (difficulty, question, correct_answer)
 VALUES (
     'easy',
-    'Anteeksi', 
-    'Sorry'
+    'Tänään on kaunis päivä', 
+    'It is a beautiful day today'
 );
 
 INSERT INTO practices (difficulty, question, correct_answer)
 VALUES (
     'easy',
-    'Hauska tavata', 
-    'Nice to meet you'
+    'Nimeni on John ja pidän matematiikasta', 
+    'My name is John and I like math'
 );
 
 INSERT INTO practices (difficulty, question, correct_answer)
 VALUES (
     'easy',
-    'Nähdään', 
-    'See you'
+    'Nähdään myöhemmin kirjastossa', 
+    'See you later at the library'
 );
 
 INSERT INTO practices (difficulty, question, correct_answer)
 VALUES (
     'easy',
-    'Ole hyvä', 
-    'You are welcome'
+    'Olet niin mukava ja taitava ohjelmoimaan', 
+    'You are so nice and good at programming'
 );
 
 INSERT INTO practices (difficulty, question, correct_answer)
 VALUES (
     'easy',
-    'Minun nimeni on John', 
-    'My name is John'
+    'Minun nimeni on John ja olen 20 vuotias', 
+    'My name is John and I am 20 years old'
 );
 
 INSERT INTO practices (difficulty, question, correct_answer)
 VALUES (
     'easy',
-    'Mitä kuuluu?', 
-    'How are you?'
+    'Minulla on koira ja kaksi kissaa', 
+    'I have a dog and two cats'
 );
 
 INSERT INTO practices (difficulty, question, correct_answer)
 VALUES (
     'medium',
-    'Missä on juna-asema?', 
-    'Where is the train station?'
+    'Opiskelen suomea koska asun Helsingissä', 
+    'I am studying Finnish because I live in Helsinki'
 );
 
 INSERT INTO practices (difficulty, question, correct_answer)
 VALUES (
     'medium',
-    'Opiskelen Aalto-yliopistossa', 
-    'I study in Aalto University'
+    'Opiskelen Aalto-yliopistossa ja valmistun pian', 
+    'I study in Aalto University and I will graduate soon'
 );
 
 INSERT INTO practices (difficulty, question, correct_answer)
 VALUES (
     'medium',
-    'Olen myöhässä lennoltani', 
-    'I am late for my flight'
-);
-
-
-INSERT INTO practices (difficulty, question, correct_answer)
-VALUES (
-    'medium',
-    'Pidän ohjelmoinnista', 
-    'I like programming'
-);
-
-INSERT INTO practices (difficulty, question, correct_answer)
-VALUES (
-    'medium',
-    'Tule kanssani kirjastoon', 
-    'Come with me to the library'
+    'Olen myöhässä lennoltani ja olen nälkäinen', 
+    'I am late for my flight and I am hungry'
 );
 
 
 INSERT INTO practices (difficulty, question, correct_answer)
 VALUES (
     'medium',
-    'Osaan leipoa keksejä', 
-    'I can bake cookies'
+    'Pidän ohjelmoinnista ja tietokannoista', 
+    'I like programming and databases'
+);
+
+INSERT INTO practices (difficulty, question, correct_answer)
+VALUES (
+    'medium',
+    'Tule kanssani kirjastoon opiskelemaan ja juttelemaan', 
+    'Come with me to the library to study and talk'
+);
+
+
+INSERT INTO practices (difficulty, question, correct_answer)
+VALUES (
+    'medium',
+    'Osaan leipoa keksejä ja syntymäpäiväkakkuja', 
+    'I can bake cookies and birthday cakes'
 );
 
 INSERT INTO practices (difficulty, question, correct_answer)
@@ -109,36 +109,36 @@ VALUES (
 INSERT INTO practices (difficulty, question, correct_answer)
 VALUES (
     'hard',
-    'Haluan olla ohjelmistokehittäjä', 
-    'I want to be a software developer'
+    'Haluan olla isona ohjelmistokehittäjä', 
+    'I want to be a software developer when I grow up'
 );
 
 INSERT INTO practices (difficulty, question, correct_answer)
 VALUES (
     'hard',
-    'Halutko syödä lounasta kanssani?', 
-    'Do you want to eat lunch with me?'
+    'Halutko syödä lounasta kanssani ravintolassa?', 
+    'Do you want to eat lunch with me in the restaurant?'
 );
 
 
 INSERT INTO practices (difficulty, question, correct_answer)
 VALUES (
     'hard',
-    'Minulla on paras tietokone', 
-    'I have the best computer'
+    'Minulla on paras ja tehokkain tietokone', 
+    'I have the best and the most efficient computer'
 );
 
 INSERT INTO practices (difficulty, question, correct_answer)
 VALUES (
     'hard',
-    'Kävelen huomenna kouluun', 
-    'I will walk to school tomorrow'
+    'Kävelen huomenna kouluun kaverini kanssa', 
+    'I will walk to school tomorrow with my friend'
 );
 
 INSERT INTO practices (difficulty, question, correct_answer)
 VALUES (
     'hard',
-    'Eilen satoi', 
-    'Yesterday it rained'
+    'Eilen satoi mutta tänään paistaa aurinko', 
+    'Yesterday it rained but today it is sunny'
 );
 
