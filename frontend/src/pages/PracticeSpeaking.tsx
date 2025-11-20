@@ -12,7 +12,7 @@ import { Answer } from "@/domain/Answer";
 import { AnswerValidator } from "@/domain/AnswerValidator";
 import { EmotionDetector } from "@/domain/EmotionDetector";
 import { Emotion } from "@/universal/Emotion";
-import { FindNextPractice, practicesByDifficulty } from "@/lib/api";
+import { FindNextPractice } from "@/lib/api";
 
 type RecordingState = "idle" | "recording" | "processing";
 type SessionMode = "emotion" | "fixed"; // "fixed" = A, "emotion" = B
@@ -37,6 +37,7 @@ const ANSWERS_KEY = "practice_answers_v1";
 const MODE_KEY = "practice_mode_v1";
 
 const PARTICIPANT_ID_KEY = "participant_id";
+const USED_IDS_KEY = "practice_used_ids_v1"; // 这一轮已用过的题目 id
 
 const PracticeSpeaking = () => {
   const navigate = useNavigate();
@@ -94,6 +95,18 @@ const PracticeSpeaking = () => {
     return n;
   });
 
+  // 这一轮 session 中已经出现过的 practice id
+  const [usedIds, setUsedIds] = useState<number[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = window.sessionStorage.getItem(USED_IDS_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  });
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -114,6 +127,7 @@ const PracticeSpeaking = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 切换模式时重置计数 & 已用题目
   useEffect(() => {
     if (typeof window === "undefined") return;
     const existingMode = window.sessionStorage.getItem(MODE_KEY);
@@ -121,7 +135,9 @@ const PracticeSpeaking = () => {
       window.sessionStorage.setItem(MODE_KEY, sessionMode);
       window.sessionStorage.removeItem(COUNT_KEY);
       window.sessionStorage.removeItem(ANSWERS_KEY);
+      window.sessionStorage.removeItem(USED_IDS_KEY);
       setQuestionCount(0);
+      setUsedIds([]);
     }
   }, [sessionMode]);
 
@@ -147,37 +163,67 @@ const PracticeSpeaking = () => {
       }
 
       const base = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
+      // 根据 sessionMode 选用 A 表还是 B 表
+      const modePath =
+        sessionMode === "fixed" ? "/api/practices_a" : "/api/practices_b";
 
       try {
-        const list = await practicesByDifficulty(diff);
+        // 1）先按难度取题
+        const listRes = await fetch(`${base}${modePath}?difficulty=${diff}`);
+        if (!listRes.ok) {
+          throw new Error(`HTTP ${listRes.status} ${listRes.statusText}`);
+        }
+        const list: Practice[] = await listRes.json();
         if (!mounted) return;
 
         if (Array.isArray(list) && list.length > 0) {
-          const item = list[Math.floor(Math.random() * list.length)];
+          // 先过滤掉已经用过的题，如果这一难度都用光了，就允许重复
+          const candidates =
+            Array.isArray(usedIds) && usedIds.length > 0
+              ? list.filter((item) => !usedIds.includes(item.id))
+              : list;
+
+          const pool = candidates.length > 0 ? candidates : list;
+          const item = pool[Math.floor(Math.random() * pool.length)];
           setPractice(item);
         } else {
-          const r = await fetch(`${base}/api/practices`);
+          // 2）如果这个难度没有题，就在同一个 mode 下随便取一题
+          const r = await fetch(`${base}${modePath}`);
           if (!r.ok) throw new Error(`Fallback HTTP ${r.status} ${r.statusText}`);
-          const all = await r.json();
+          const all: Practice[] = await r.json();
           if (Array.isArray(all) && all.length > 0) {
-            setPractice(all[Math.floor(Math.random() * all.length)]);
-            setHint(`No "${diff}" practices; used any difficulty.`);
+            // 同样可以过滤已用 id（这里题数一般更多，其实重复概率本来也不高）
+            const candidates =
+              Array.isArray(usedIds) && usedIds.length > 0
+                ? all.filter((item) => !usedIds.includes(item.id))
+                : all;
+            const pool = candidates.length > 0 ? candidates : all;
+
+            setPractice(pool[Math.floor(Math.random() * pool.length)]);
+            setHint(`No "${diff}" practices; used any difficulty in this mode.`);
           } else {
-            setFatal("No practices found in database.");
+            setFatal("No practices found in database for this mode.");
           }
         }
       } catch (err: any) {
         try {
-          const r = await fetch(`${base}/api/practices`);
+          // 3）如果上面整个流程报错，也只在当前 mode 下随便取一题
+          const r = await fetch(`${base}${modePath}`);
           if (!r.ok) throw new Error(`Fallback HTTP ${r.status} ${r.statusText}`);
-          const all = await r.json();
+          const all: Practice[] = await r.json();
           if (Array.isArray(all) && all.length > 0) {
-            setPractice(all[Math.floor(Math.random() * all.length)]);
+            const candidates =
+              Array.isArray(usedIds) && usedIds.length > 0
+                ? all.filter((item) => !usedIds.includes(item.id))
+                : all;
+            const pool = candidates.length > 0 ? candidates : all;
+
+            setPractice(pool[Math.floor(Math.random() * pool.length)]);
             setHint(
-              `Failed to load "${navState?.difficulty ?? "easy"}"; used any difficulty.`
+              `Failed to load "${navState?.difficulty ?? "easy"}"; used any difficulty in this mode.`
             );
           } else {
-            setFatal("No practices found in database.");
+            setFatal("No practices found in database for this mode.");
           }
         } catch (err2: any) {
           setFatal(`Failed to load practices: ${err2?.message ?? "unknown error"}`);
@@ -196,7 +242,7 @@ const PracticeSpeaking = () => {
       } catch {}
       recognitionRef.current = null;
     };
-  }, [navState?.difficulty, questionCount, sessionMode]);
+  }, [navState?.difficulty, questionCount, sessionMode, usedIds]);
 
   const handleMicClick = async () => {
     if (state === "idle") {
@@ -326,6 +372,18 @@ const PracticeSpeaking = () => {
       console.warn("Failed to log answers in sessionStorage:", e);
     }
 
+    // 把当前 practice id 记为“已使用”
+    try {
+      const rawUsed = window.sessionStorage.getItem(USED_IDS_KEY);
+      const prevUsed: number[] = rawUsed ? JSON.parse(rawUsed) : [];
+      const exists = prevUsed.includes(practice.id);
+      const nextUsed = exists ? prevUsed : [...prevUsed, practice.id];
+      window.sessionStorage.setItem(USED_IDS_KEY, JSON.stringify(nextUsed));
+      setUsedIds(nextUsed);
+    } catch (e) {
+      console.warn("Failed to log used practice ids:", e);
+    }
+
     const sessionFinished = newCount >= MAX_QUESTIONS;
 
     if (sessionFinished) {
@@ -334,7 +392,14 @@ const PracticeSpeaking = () => {
           window.localStorage.getItem(PARTICIPANT_ID_KEY) ?? "";
         const versionLabel = sessionMode === "fixed" ? "A" : "B";
 
-        const header = ["ParticipantId", "Version", "Task", "Difficulty", "Emotion", "Correct"];
+        const header = [
+          "ParticipantId",
+          "Version",
+          "Task",
+          "Difficulty",
+          "Emotion",
+          "Correct",
+        ];
         const rows = updated.map((e) => [
           participantId || "",
           versionLabel,
@@ -349,7 +414,9 @@ const PracticeSpeaking = () => {
           "\n" +
           rows.map((r) => r.join(",")).join("\n");
 
-        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const blob = new Blob([csvContent], {
+          type: "text/csv;charset=utf-8;",
+        });
 
         const fileName = `${participantId || "unknown"}_${versionLabel}.csv`;
 
@@ -364,12 +431,12 @@ const PracticeSpeaking = () => {
         URL.revokeObjectURL(url);
 
         window.sessionStorage.removeItem(ANSWERS_KEY);
-
+        window.sessionStorage.removeItem(USED_IDS_KEY);
+        setUsedIds([]);
       } catch (err) {
         console.warn("Failed to export CSV:", err);
       }
     }
-
 
     let nextDifficulty: Practice["difficulty"] = practice.difficulty;
 
@@ -438,6 +505,20 @@ const PracticeSpeaking = () => {
       window.sessionStorage.setItem(COUNT_KEY, String(newCount));
     }
 
+    // Skip 也算“用过这道题”
+    try {
+      if (practice?.id != null) {
+        const rawUsed = window.sessionStorage.getItem(USED_IDS_KEY);
+        const prevUsed: number[] = rawUsed ? JSON.parse(rawUsed) : [];
+        const exists = prevUsed.includes(practice.id);
+        const nextUsed = exists ? prevUsed : [...prevUsed, practice.id];
+        window.sessionStorage.setItem(USED_IDS_KEY, JSON.stringify(nextUsed));
+        setUsedIds(nextUsed);
+      }
+    } catch (e) {
+      console.warn("Failed to log used practice ids on skip:", e);
+    }
+
     navigate("/practice/result", {
       state: practice
         ? {
@@ -490,19 +571,26 @@ const PracticeSpeaking = () => {
               {!loading && !fatal && (practice?.question ?? "No question")}
             </div>
             <div className="flex flex-col items-center gap-6">
-              <MicButton isRecording={state === "recording"} onClick={handleMicClick} />
+              <MicButton
+                isRecording={state === "recording"}
+                onClick={handleMicClick}
+              />
               {state === "recording" && (
                 <p className="text-muted-foreground">
                   Recording... Click again to Stop
                 </p>
               )}
               {state === "processing" && (
-                <p className="text-muted-foreground">Processing your answer...</p>
+                <p className="text-muted-foreground">
+                  Processing your answer...
+                </p>
               )}
             </div>
           </Card>
           {hint && !fatal && (
-            <p className="mt-3 text-sm text-white/80 text-right italic">{hint}</p>
+            <p className="mt-3 text-sm text-white/80 text-right italic">
+              {hint}
+            </p>
           )}
           <div className="flex justify-end mt-4">
             <Button
