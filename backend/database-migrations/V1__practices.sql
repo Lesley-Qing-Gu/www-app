@@ -98,19 +98,19 @@ INSERT INTO practices_b (difficulty, question, correct_answer) VALUES
 
 -- Easy (B11–B16)
 INSERT INTO practices_b (difficulty, question, correct_answer) VALUES
-('easy', 'Avaan ikkunan.', 'Open the window.');
+('easy', 'Avaan oven.', 'Open the door.');
 
 INSERT INTO practices_b (difficulty, question, correct_answer) VALUES
-('easy', 'Suljen oven.', 'Close the door.');
+('easy', 'Suljen ikkunan.', 'Close the window.');
 
 INSERT INTO practices_b (difficulty, question, correct_answer) VALUES
-('easy', 'Suljen puiston.', 'Close the park.');
+('easy', 'Istun puistossa.', 'Sit in the park.');
 
 INSERT INTO practices_b (difficulty, question, correct_answer) VALUES
 ('easy', 'Jos tuulee.', 'If it''s windy.');
 
 INSERT INTO practices_b (difficulty, question, correct_answer) VALUES
-('easy', 'On valoisaa.', 'It''s bright.');
+('easy', 'Vaikka on valoisaa.', 'Even though it''s bright.');
 
 INSERT INTO practices_b (difficulty, question, correct_answer) VALUES
 ('easy', 'Ennen kuin lähden.', 'Before I leave.');
